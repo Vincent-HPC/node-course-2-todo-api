@@ -14,7 +14,7 @@ MongoClient.connect('mongodb://localhost:27017/TodoApp', (err, db) => {
         return console.log('Unable to connect to MongoDB server');
     }
     console.log('Connected to MongoDB server');
-    //toArray returns a promise
+    //**    toArray returns a promise   **//
     // db.collection('Todos').find({
     //     // completed: false
     //     // _id: '5a6f2921b77862d05d2db6ff' <-this isn't work cuz _id is an obj.,not string
