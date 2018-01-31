@@ -8,14 +8,36 @@ const {
     Todo
 } = require('./../models/todo');
 
+const todos = [{
+    text: 'First test todo'
+}, {
+    text: 'Second test todo'
+}];
+
+
 // beforeEach will let us run some code before every single test case
 // Use beforeEach to set up the database in a way that's useful
 // make sure the database is empty right here
 // Once called done,it's only going to move on the test case
 // We can do something asynchronous inside of here
+
+// Down below only for testing POST
+// **************************************** //
+// beforeEach((done) => {
+//     Todo.remove({}).then(() => done());
+// });
+// **************************************** //
+
+// Down below for testing GET, so need insert to db
+// **************************************** //
 beforeEach((done) => {
-    Todo.remove({}).then(() => done());
+    Todo.remove({}).then(() => {
+        return Todo.insertMany(todos);
+    }).then(() => done());
 });
+// **************************************** //
+
+
 
 describe('POST /todos', () => {
     it('should create a new todo', (done) => {
@@ -35,7 +57,9 @@ describe('POST /todos', () => {
                     return done(err);
                 }
                 //Todo.find is really similar to the MongoDB native find method
-                Todo.find().then((todos) => {
+                Todo.find({
+                    text
+                }).then((todos) => {
                     expect(todos.length).toBe(1); // 3
                     expect(todos[0].text).toBe(text);
                     done();
@@ -59,9 +83,23 @@ describe('POST /todos', () => {
                 }
 
                 Todo.find().then((todos) => {
-                    expect(todos.length).toBe(0);
+                    expect(todos.length).toBe(2);
                     done();
                 }).catch((e) => done(e));
             });
+    });
+});
+
+describe('GET /todos', () => {
+    it('should get all todos', (done) => {
+        request(app)
+            .get('/todos')
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todos.length).toBe(2);
+            })
+            .end(done);
+        // cuz not doing anything synchronous here,
+        // so no need to provide a function to end like above
     });
 });
