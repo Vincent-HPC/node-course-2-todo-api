@@ -1,5 +1,8 @@
 var express = require('express');
 var bodyParser = require('body-parser');
+var {
+    ObjectID
+} = require('mongodb');
 
 var {
     mongoose
@@ -10,6 +13,7 @@ var {
 var {
     User
 } = require('./models/user');
+
 
 var app = express();
 
@@ -38,6 +42,51 @@ app.get('/todos', (req, res) => {
     }, (e) => {
         res.status(400).send(e);
     });
+});
+
+
+// challenge GET /todos/1234324
+app.get('/todos/:id', (req, res) => {
+    var id = req.params.id;
+
+    // Valid id using isValid
+    // // 404 - send back empty send
+    if (!ObjectID.isValid(id)) {
+        // res.status(404);
+        // return res.send();
+        return res.status(404).send();
+    }
+
+    // findById
+    // // success
+    // // // if todo - send it back
+    // // // if no todo - send back 404 with empty body
+    // // error
+    // // // 400 - send empty body back
+
+    Todo.findById(id).then((todo) => {
+        if (!todo) {
+            return res.status(404).send();
+        }
+        // res.send(todo);
+        res.send({
+            todo
+        });
+        // Instead of sending back todo with the array as the body
+        // here send back an Object where the todo is attached as
+        // the todo property using ES6 obj.
+        // it's more flexible to add properties onto the response
+    }).catch((e) => {
+        res.status(400).send();
+    });
+
+    // }, (e) => {
+    //     res.status(400);
+    //     res.send();
+    // });
+
+    // what diff between up above two case?!
+    // catch(e) or (e) =>{}
 });
 
 
