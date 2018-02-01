@@ -1,6 +1,7 @@
-var express = require('express');
-var bodyParser = require('body-parser');
-var {
+const _ = require('lodash');
+const express = require('express');
+const bodyParser = require('body-parser');
+const {
     ObjectID
 } = require('mongodb');
 
@@ -110,6 +111,48 @@ app.delete('/todos/:id', (req, res) => {
     });
 
 });
+
+app.patch('/todos/:id', (req, res) => {
+    var id = req.params.id;
+
+    // We dont need users updating ids or adding any other
+    // properties that aren't specified in the mongoose model.
+    // This has a subset of the things the user passed to us.
+    // We don't want user to able to update anything they choose.
+    var body = _.pick(req.body, ['text', 'completed']);
+
+    if (!ObjectID.isValid(id)) {
+        return res.status(404).send();
+    }
+
+    //This if statement checking if the completed property is a
+    //boolean and it's on body
+    if (_.isBoolean(body.completed) && body.completed) {
+        body.completedAt = new Date().getTime(); //This is the number of milliseconds since midnight on 1/1/1970
+    } else {
+        body.completed = false;
+        //When u want to remove a value from the database u can simply set it to null
+        body.completedAt = null;
+    }
+
+    Todo.findByIdAndUpdate(id, {
+        $set: body
+    }, {
+        new: true
+    }).then((todo) => {
+        if (!todo) {
+            return res.status(404).send();
+        }
+
+        res.send({ // send back as the todo property where todo equals
+            todo // the todo variable using the ES6 syntax
+        });
+    }).catch((e) => {
+        res.status(400).send();
+    })
+
+});
+
 
 
 
