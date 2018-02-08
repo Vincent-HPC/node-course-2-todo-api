@@ -156,6 +156,49 @@ app.patch('/todos/:id', (req, res) => {
 });
 
 
+// var body = _.pick(req.body, ['text', 'completed']);
+// app.post('/todos', (req, res) => {
+//     var todo = new Todo({
+//         text: req.body.text
+//     });
+//
+//     todo.save().then((doc) => {
+//         res.send(doc);
+//     }, (e) => {
+//         res.status(400).send(e);
+//     });
+// });
+
+app.post('/users', (req, res) => {
+    var body = _.pick(req.body, ['email', 'password']);
+    var user = new User(body);
+    // *** There's no reason to pass in an object that we create
+    // when we already have the object we need ***
+    // var user = new User({
+    //     email: body.email,
+    //     password: body.password
+    // });
+
+    // // It's a custom model  method we're going to create
+    // User.findByToken
+    // // This method will be responsible for adding a token on it to the
+    // // individual user document saving that and returning the token
+    // // instance method
+    // user.generateAuthToken
+
+    // user.save().then((user) <== the user variable which was the arg. to then
+    // that we sent back isn't the same as the user variable defined here
+    // but this value is identical to the one up here
+    // they're the same excat thing in memory which means we can simply remove the arg.
+    user.save().then(() => {
+        return user.generateAuthToken();
+    }).then((token) => {
+        res.header('x-auth', token).send(user);
+    }).catch((e) => {
+        res.status(400).send(e);
+    })
+});
+
 
 
 app.listen(port, () => {
