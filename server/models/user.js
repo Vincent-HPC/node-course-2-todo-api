@@ -43,7 +43,7 @@ var UserSchema = new mongoose.Schema({
     }]
 });
 
-
+// @Override the function toJSON which is default options method
 UserSchema.methods.toJSON = function() {
     var user = this;
     //.toObject() let mongoose variable "user" converting it into a regular object
@@ -90,6 +90,27 @@ UserSchema.methods.generateAuthToken = function() {
     // That value will get passed as the success argument for the next then call
     return user.save().then(() => {
         return token;
+    });
+};
+
+UserSchema.statics.findByToken = function(token) {
+    var User = this;
+    var decoded;
+
+    try {
+        decoded = jwt.verify(token, 'abc123');
+    } catch (e) {
+        // return new Promise((resolve, reject) => {
+        //     reject();
+        // });
+        return Promise.reject(); // the same above
+    }
+
+    // This will return a promise and return that in order to add some chaining.
+    return User.findOne({
+        '_id': decoded._id,
+        'tokens.token': token,
+        'tokens.access': 'auth'
     });
 };
 
