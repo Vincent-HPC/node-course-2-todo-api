@@ -10,16 +10,16 @@ const {
 const {
     Todo
 } = require('./../models/todo');
+const {
+    User
+} = require('./../models/user');
+const {
+    todos,
+    populateTodos,
+    users,
+    populateUsers
+} = require('./seed/seed');
 
-const todos = [{
-    _id: new ObjectID(),
-    text: 'First test todo'
-}, {
-    _id: new ObjectID(),
-    text: 'Second test todo',
-    completed: true,
-    completedAt: 333
-}];
 
 
 // beforeEach will let us run some code before every single test case
@@ -35,13 +35,11 @@ const todos = [{
 // });
 // **************************************** //
 
+
+beforeEach(populateUsers);
 // Down below for testing GET, so need insert to db
 // **************************************** //
-beforeEach((done) => {
-    Todo.remove({}).then(() => {
-        return Todo.insertMany(todos);
-    }).then(() => done());
-});
+beforeEach(populateTodos);
 // **************************************** //
 
 
@@ -188,12 +186,12 @@ describe('PATH /todos/:id', () => {
     it('should update the todo', (done) => {
         var hexId = todos[0]._id.toHexString(); // grab id of first item
 
-        var text = "PATH test_1: should update the todo ";
+        var text = 'This should be the new text';
         request(app)
             .patch(`/todos/${hexId}`)
             .send({
-                text, // update text, set completed true
-                "completed": true
+                'completed': true,
+                text // update text, set completed true
             })
             .expect(200) // 200
             .expect((res) => {
@@ -229,12 +227,12 @@ describe('PATH /todos/:id', () => {
         // grab id of second item
         var hexId = todos[1]._id.toHexString();
 
-        var text = "PATH test_2: should clear completedAt when todo is not completed "
+        var text = "This should be the new text : 2";
         request(app)
             .patch(`/todos/${hexId}`)
             .send({
-                text,
-                completed: false
+                "completed": false,
+                text
             })
             .expect(200)
             .expect((res) => {
@@ -246,5 +244,96 @@ describe('PATH /todos/:id', () => {
         // update text, set completed to false
         // 200
         // text is changed, completed false, completedAt is null .toNotExist
+    });
+});
+
+describe('GET /users/me', () => {
+    it('should return user if authenticated', (done) => {
+        request(app)
+            .get('/users/me')
+            .set('x-auth', users[0].tokens[0].token)
+            .expect(200)
+            .expect((res) => {
+                // two assertions that make user when we provide
+                // a valid token ,we get valid data back
+                expect(res.body._id).toBe(users[0]._id.toHexString());
+                expect(res.body.email).toBe(users[0].email);
+            })
+            .end(done);
+    });
+
+    it('should return 401 if not authenticated', (done) => {
+        request(app)
+            .get('/users/me')
+            .expect(401)
+            .expect((res) => {
+                expect(res.body).toEqual({});
+            })
+            .end(done);
+    });
+});
+
+describe('POST /users', () => {
+    it('should create a user', (done) => {
+        // require a unique valid email and a password
+        var email = 'example@example.com';
+        var password = '123mnb';
+
+        request(app)
+            .post('/users')
+            .send({
+                email,
+                password
+            })
+            .expect(200)
+            .expect((res) => {
+                //expect that the response headers object has a header called x-auth
+                // use the bracket notation as opposed to the dot notation
+                // cuz "x'-'auth" invalid using dot notaion
+                expect(res.headers['x-auth']).toExist();
+                expect(res.body._id).toExist();
+                expect(res.body.email).toBe(email);
+            })
+            .end((err) => {
+                if (err) {
+                    return done(err);
+                }
+
+                User.findOne({
+                    email
+                }).then((user) => {
+                    expect(user).toExist();
+                    expect(user.password).toNotBe(password);
+                    done();
+                });
+            });
+    });
+
+    it('should return validation errors if request invalid', (done) => {
+        // send across an invalid email and an invalid password, get 400
+
+        request(app)
+            .post('/users')
+            .send({
+                email: 'exampleerror',
+                password: '12345'
+            })
+            .expect(400)
+            .end(done);
+    });
+
+    it('should not create user if email in use', (done) => {
+        // use an email that's already taken
+        // try to sign up using one of the emails that in seed data
+        // and a valid password, get 400
+
+        request(app)
+            .post('/users')
+            .send({
+                email: users[1].email,
+                password: 'Password123!'
+            })
+            .expect(400)
+            .end(done);
     });
 });
