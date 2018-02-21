@@ -94,6 +94,21 @@ UserSchema.methods.generateAuthToken = function() {
     });
 };
 
+// L97 ,it's instance method
+UserSchema.methods.removeToken = function(token) {
+    // $pull let u remove items from an array that match certain criteria
+    // to take a look at how this works
+    var user = this;
+
+    return user.update({
+        $pull: {
+            tokens: {
+                token
+            }
+        }
+    });
+};
+
 UserSchema.statics.findByToken = function(token) {
     var User = this;
     var decoded;

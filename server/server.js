@@ -209,6 +209,14 @@ app.post('/users/login', (req, res) => {
     });
 });
 
+app.delete('/users/me/token', authenticate, (req, res) => {
+    req.user.removeToken(req.token).then(() => {
+        res.status(200).send();
+    }, () => { // things dont go well, send 400 back
+        res.status(400).send();
+    })
+});
+
 
 
 app.listen(port, () => {
