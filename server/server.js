@@ -199,10 +199,12 @@ app.post('/users/login', (req, res) => {
     var body = _.pick(req.body, ['email', 'password']);
 
     User.findByCredentials(body.email, body.password).then((user) => {
+        // This return will keep the chain alive so if we do run into any errors
+        // inside of the callback, the 400 will be used as the response
         return user.generateAuthToken().then((token) => {
             res.header('x-auth', token).send(user);
         });
-    }).catch((e) => {
+    }).catch((e) => { //The promise will automatically trigger catch case
         res.status(400).send();
     });
 });
