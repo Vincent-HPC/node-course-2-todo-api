@@ -3,7 +3,7 @@
 const {
     ObjectID
 } = require('mongodb');
-const jwt = require('jsonwebToken');
+const jwt = require('jsonwebtoken');
 
 const {
     Todo
